@@ -1,1 +1,550 @@
+#include <kipr/botball.h>
+
+//**********defines**********
+
+#define sky1 			310
+#define sky2 			300
+#define sky2_angle 		18
+#define sky3 			310
+#define sky3_angle 		25
+#define central 		170
+#define speed_angle 	100
+#define speed_drive 	200
+#define c_speed 		100
+#define detect_people 	2000
+
+
+void turn_create_35_left();
+void turn_create_35_right();
+void turn_create();
+void turn_create_left();
+void turn_create_right();
+void turn_create_sky2_right();
+void turn_create_sky2_left();
+void turn_create_sky3_right();
+void turn_create_sky3_left();
+void turn_create_45_right();
+void turn_create_45_left();
+void turn_create_150_right();
+void turn_create_150_left();
+void extend_arm();
+void retract_arm();
+void retract_arm_half();
+void open_gripper();
+void close_gripper();
+int drive_create(int);
+void calibrate_create();
+int servo_arm(int);
+void get_water();
+
+
+int main()
+{
+    int burning = 0;
+    printf("Botball 2019\n");
+    create_connect();
+    create_full();
+    set_create_distance(0);
+    set_create_total_angle(0);
+    servo_arm(900);
+    open_gripper();
+
+    
+    drive_create(150);
+    turn_create_left();
+    drive_create(25);
+    calibrate_create();
+    drive_create(central);		//central position
+    
+//**********skyscraper1********** 
+    
+    servo_arm(1220);
+    drive_create(sky1-30);
+    
+    
+    if (analog(0) < detect_people)
+    {
+        burning = 1;
+        drive_create(-sky1+30);
+    }
+    
+    else
+    {
+        servo_arm(1170);
+        drive_create(30);
+        close_gripper();
+        printf("Building is not burning!\n");
+        servo_arm(1600);
+        msleep(1);
+        servo_arm(1750);
+        drive_create(-sky1);
+        servo_arm(900);
+        turn_create_150_left();
+        drive_create(-300);
+        servo_arm(400);
+        open_gripper();
+        drive_create(300);
+      	turn_create_150_right();			//central position
+        drive_create(-central+50);
+        calibrate_create();
+        drive_create(central);				//central position
+    }
+    
+//**********skyscraper2**********    
+    
+    servo_arm(950);
+    turn_create_sky2_left();
+    drive_create(sky2-70);
+    
+
+    
+    if (analog(0) < detect_people)
+    {
+        burning = 2;
+    	drive_create(-sky2+70);
+        turn_create_sky2_right();
+    }
+    
+    else
+    {
+        printf("Building is not burning!\n");
+        servo_arm(900);
+        drive_create(70);
+        close_gripper();
+        servo_arm(1250);
+        drive_create(-sky2);
+        turn_create_sky2_right();
+        servo_arm(800);
+        turn_create_150_left();
+        drive_create(-350);
+        servo_arm(400);
+        open_gripper();
+        drive_create(350);
+        turn_create_150_right();	//central position
+        servo_arm(700);		
+        drive_create(-central+50);
+        calibrate_create();
+        drive_create(central);		//central position
+    }
+    
+//**********skyscraper3********** 
+    
+    if (burning == 0)
+    {
+        burning = 3;
+    }
+    else
+    {    
+    	servo_arm(950);
+    	turn_create_sky3_right();
+    	drive_create(sky3);
+        servo_arm(880);
+        close_gripper();
+        printf("Building is not burning!\n");
+        servo_arm(1300);
+        drive_create(-sky3);
+        turn_create_sky3_left();
+        servo_arm(800);
+        turn_create_150_left();
+        drive_create(-350);
+        servo_arm(400);
+        open_gripper();
+        drive_create(350);
+        turn_create_150_right();			//central position
+        servo_arm(700);
+        drive_create(-central+50);
+        calibrate_create();
+        drive_create(central);		//central position
+    }
+    
+    
+    switch(burning) {
+        case 1: 
+            printf("Building is burning!\n");
+        	get_water();		//central position
+        	servo_arm(1380);
+    		drive_create(sky1+50);
+        	open_gripper();
+        	drive_create(-sky1-50);	//central position
+            break;
+        
+        case 2: 
+            printf("Building is burning!\n");
+        	get_water();	//central position
+        	servo_arm(1030);
+            turn_create_sky2_left();
+    		drive_create(sky2-40);
+        	open_gripper();
+        	drive_create(-sky2+40);
+            turn_create_sky2_right();	//central position
+            break;
+        
+        case 3: 
+            printf("Building is burning!\n");
+        	get_water();
+        	servo_arm(1200);
+   			turn_create_sky3_right();
+    		drive_create(sky3-70);
+        	open_gripper();
+        	drive_create(-sky3+70);
+        	turn_create_sky3_left();		//central position
+            break;
+        
+    }
+    
+    create_stop();
+    printf("Create Battery Level: %d\n",get_create_battery_capacity());
+    create_disconnect();
+    return 0;
+}
+
+
+
+//**********subroutine**********
+
+void turn_create()
+{
+    while (get_create_total_angle() < 210)
+    {
+        create_drive_direct(-speed_angle,speed_angle);
+        printf("Angle: %d\n",get_create_total_angle());
+    }
+    create_stop();
+    set_create_total_angle(0);
+}
+
+void turn_create_left()
+{
+    while (get_create_total_angle() < 97)
+    {
+        create_drive_direct(-speed_angle,speed_angle);
+        printf("Angle: %d\n",get_create_total_angle());
+    }
+    create_stop();
+    set_create_total_angle(0);
+}
+
+void turn_create_right()
+{
+    while (get_create_total_angle() > -97)
+    {
+        create_drive_direct(speed_angle,-speed_angle);
+        printf("Angle: %d\n",get_create_total_angle());
+    }
+    create_stop();
+    set_create_total_angle(0);
+}
+
+void turn_create_35_left()					
+{
+    while (get_create_total_angle() < 26)
+    {
+        create_drive_direct(-speed_angle,speed_angle);
+        printf("Angle: %d\n",get_create_total_angle());
+    }
+    create_stop();
+    set_create_total_angle(0);
+}
+
+void turn_create_35_right()						
+{
+    while (get_create_total_angle() > -26)
+    {
+        create_drive_direct(speed_angle,-speed_angle);
+        printf("Angle: %d\n",get_create_total_angle());
+    }
+    create_stop();
+    set_create_total_angle(0);
+}
+void turn_create_sky2_right()
+{
+    while (get_create_total_angle() > -sky2_angle)
+    {
+        create_drive_direct(speed_angle,-speed_angle);
+        printf("Angle: %d\n",get_create_total_angle());
+    }
+    create_stop();
+    set_create_total_angle(0);
+}
+
+void turn_create_sky2_left()
+{
+    while (get_create_total_angle() < sky2_angle)
+    {
+        create_drive_direct(-speed_angle,speed_angle);
+        printf("Angle: %d\n",get_create_total_angle());
+    }
+    create_stop();
+    set_create_total_angle(0);
+}
+
+void turn_create_sky3_right()
+{
+    while (get_create_total_angle() > -sky3_angle)
+    {
+        create_drive_direct(speed_angle,-speed_angle);
+        printf("Angle: %d\n",get_create_total_angle());
+    }
+    create_stop();
+    set_create_total_angle(0);
+}
+
+void turn_create_sky3_left()
+{
+    while (get_create_total_angle() < sky3_angle)
+    {
+        create_drive_direct(-speed_angle,speed_angle);
+        printf("Angle: %d\n",get_create_total_angle());
+    }
+    create_stop();
+    set_create_total_angle(0);
+}
+
+void turn_create_45_right()
+{
+    while (get_create_total_angle() > -45)
+    {
+        create_drive_direct(speed_angle,-speed_angle);
+        printf("Angle: %d\n",get_create_total_angle());
+    }
+    create_stop();
+    set_create_total_angle(0);
+}
+
+void turn_create_45_left()
+{
+    while (get_create_total_angle() < 45)
+    {
+        create_drive_direct(-speed_angle,speed_angle);
+        printf("Angle: %d\n",get_create_total_angle());
+    }
+    create_stop();
+    set_create_total_angle(0);
+}
+
+void turn_create_150_right()
+{
+    while (get_create_total_angle() > -150)
+    {
+        create_drive_direct(speed_angle,-speed_angle);
+        printf("Angle: %d\n",get_create_total_angle());
+    }
+    create_stop();
+    set_create_total_angle(0);
+}
+
+void turn_create_150_left()
+{
+    while (get_create_total_angle() < 150)
+    {
+        create_drive_direct(-speed_angle,speed_angle);
+        printf("Angle: %d\n",get_create_total_angle());
+    }
+    create_stop();
+    set_create_total_angle(0);
+}
+
+void extend_arm()
+{
+    cmpc(3);
+    while (gmpc(3) < 20500)
+    {
+        motor(2,-100);
+        motor(3,100);
+        printf("Motor_3 Position: %d\n",gmpc(3));
+    }
+    
+    ao();
+}
+
+
+void retract_arm()
+{
+    
+    while(digital(0) == 0)
+    {
+        motor(2,100);
+   		motor(3,-100);
+    }
+    
+    ao();
+}
+
+void retract_arm_half()
+{
+    cmpc(2);
+    while(gmpc(2) < 5000)
+    {
+        motor(2,100);
+   		motor(3,-100);
+    }
+    
+    ao();
+}
+void open_gripper()
+{ 
+    enable_servos();
+    
+    int actual_pos = get_servo_position(0);
+     
+    	while (actual_pos > 150)
+   		 {
+       		 set_servo_position(0,actual_pos);
+        	 msleep(0.1);
+       	 	 actual_pos=actual_pos-3;
+             printf("Servo Position: %d\n", get_servo_position(0));
+   		 }
+   
+   disable_servos();
+}
+
+void close_gripper()
+{
+    enable_servos();
+    
+    int actual_pos = get_servo_position(0);
+    
+   
+    	while (actual_pos < 1950)
+   		 {
+       		 set_servo_position(0,actual_pos);
+        	 msleep(0.1);
+       	 	 actual_pos=actual_pos+3;
+             printf("Servo Position: %d\n", get_servo_position(0));
+   		 }
+
+   disable_servos();
+}
+
+int drive_create(int distance)
+{
+    set_create_distance(0);
+    if(distance >= 0)
+    {
+    	while(get_create_distance()<distance)						
+    	{
+         	create_drive_direct(speed_drive,speed_drive);
+        	printf("Distance: %d\n",get_create_distance());
+  	 	}
+    }
+    else
+    {
+        while(get_create_distance()>distance)						
+    	{
+         	create_drive_direct(-speed_drive,-speed_drive);
+        	printf("Distance: %d\n",get_create_distance());
+  	 	}
+    }
+    create_stop();
+    set_create_distance(0);
+    return 0;
+}
+
+void calibrate_create()
+{
+    int i=0;
+    int fail = 0;
+    while ( i < 400)
+    {
+       create_drive_direct(-c_speed,-c_speed);
+       i++;
+       fail = 1;
+       msleep(10);
+       printf("Counter: %d\n",i);
+       if ((digital(8) == 1) && (digital(9) == 1)) 
+       {
+           i=400;
+           fail = 0;
+       }
+    }
+    if(fail==1)
+    {
+        drive_create(25);
+        turn_create_45_right();
+        turn_create_45_left();
+        turn_create_45_left();
+        turn_create_45_right();
+        calibrate_create();
+        
+    }
+    create_stop();
+    set_create_distance(0);
+
+
+}
+
+int servo_arm(int pos)
+{
+    enable_servos();
+    
+    int actual_pos = get_servo_position(2);
+    
+    int arm_3 = 2020-actual_pos;
+    
+    
+    if(actual_pos < pos)
+    
+    	while (actual_pos < pos)
+   		 {
+       		 set_servo_position(2,actual_pos);
+             if(pos>1000) set_servo_position(1,actual_pos-200);
+       		 set_servo_position(3,arm_3); 
+        	 msleep(0.1);
+       	 	 actual_pos++;
+       		 arm_3--;
+             printf("Servo Position: %d\n", get_servo_position(2));
+   		 }
+   
+       
+   else 
+   
+       while (actual_pos > pos)
+   		 {
+       		 set_servo_position(2,actual_pos);
+             if (pos<=1000) set_servo_position(1,200);
+       		 set_servo_position(3,arm_3); 
+        	 msleep(0.1);
+       	 	 actual_pos--;
+       		 arm_3++;
+        	 printf("Servo Position: %d\n", get_servo_position(2));
+   }
+   disable_servos();
+   return 0;
+    
+}
+
+
+void get_water()
+{
+    servo_arm(800);
+    turn_create_left();
+    drive_create(400);
+    turn_create_35_left();
+    drive_create(-100);
+    servo_arm(250);
+    drive_create(120);
+    enable_servos();	// close gripper
+    
+    int actual_pos = get_servo_position(0);
+    
+    
+    	while (actual_pos < 1600)
+   		 {
+       		 set_servo_position(0,actual_pos);
+        	 msleep(0.1);
+       	 	 actual_pos++;
+             printf("Servo Position: %d\n", get_servo_position(0));
+   		 }
+   
+    disable_servos();
+    servo_arm(1000);
+    drive_create(-20);
+    turn_create_35_right();
+    drive_create(-400);
+    turn_create_right();
+    calibrate_create();
+    drive_create(central-150);
+    servo_arm(1200);
+    drive_create(150);		//central position
+}
 
