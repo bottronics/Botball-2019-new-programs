@@ -1,1 +1,715 @@
+#include <kipr/botball.h>
+#include <stdio.h>
 
+#define light				3	//defines at the beginning, won't work otherwise	
+#define dark				150
+
+	void init();
+	int drive_until_sensor_or_max(int, int);
+	int drive(int,int); 
+	int drive_backwards(int,int);
+	void close_clamp();
+	void close_clamp_a_little_bit();
+	void get_two_fireman();
+	void open_clamp();
+	int rotate_right(int);
+	int rotate_left(int);
+	void calibrate();
+	void camera();
+	void turn_around();
+	int rotate45_r(int);
+	int rotate45_l(int);
+	void drive_correction();
+	void open_clamp_back();
+	void close_clamp_back();
+	void kip_down_back_clamp();
+	void rise_back_clamp();
+	void drive_till_black();
+	void calibrate_bw_sensor();
+	void camera_medical_building();
+	void calibrate_correction();
+	void calibrate_fireman();
+	void calibrate_before_medical();
+	void firetruck();
+	void get_robot_parallel();
+	void medical_building_drive();
+	void Step1();
+	void Step2();
+	void Step3();
+	void Step4();
+	void Step5();
+	void Step6();
+	void Step7();
+	void Step8();
+	void Step9();
+	void Step10();
+	void Step11();
+
+	int i=1;
+	int a=0;
+    int b=0;
+    int c=0;
+	int burning=0;
+    int average=0;
+	
+
+    int main()
+	{
+        init();
+    	int detect=0;
+    	int loops=0;
+        int distance=0;
+      
+    	camera_open_black();
+    	while(loops<=70 && detect<5)
+    	{
+            msleep(50);
+    		camera_update();
+
+            
+    		if (get_object_count(0)>=1)
+    		{
+     			detect++;
+     			printf("Detectet\n");
+                printf("Height: %d\n", get_object_center_y(0,0));
+                distance=distance+get_object_center_y(0,0);
+    		}
+            
+   		 	loops++;
+            
+    		
+        }
+        printf("70 Loops ok\n");
+        
+        if (detect>0)
+        	{
+       	 	average=distance/detect;
+        	printf("Average: %d\n", average);
+        	}
+        else
+        	{
+        	average=40;
+        	printf("Average: %d\n", average);
+       	 	}
+        
+        int j=0;
+     	while (analog(light) > dark)
+        {
+            msleep(10);
+            if (j>500)
+            {
+                
+                printf("Wait for light\n");
+                j=0;
+            }
+            j++;
+            
+        }
+       	shut_down_in(119);
+        Step1();
+      	Step2();
+      	//camera_medical_building();
+      	//drive_correction();
+        //rotate45_l(-100);
+        //drive_correction();
+        //drive_backwards(-300,100);
+        //calibrate_fireman();
+ 
+   		return 0;
+	}
+
+	void init()
+    {	
+        printf("Hi Bottball\n");
+        printf("My Name is Scorpion King\n");
+        printf("Init\n");
+       //Motor, Servo
+     	#define motor_r			    0
+        #define motor_l			    1		
+        #define clamp				1
+        #define back_clamp			3
+        #define move_back_clamp		2
+        
+        //Motion   	 	
+        #define clamp_open		  751
+        #define clamp_close 	 2000
+        #define rotate_r		  850
+        #define rotate_l		 -900
+        #define turn			 1600
+        #define rotate_r45	  	  110
+        #define rotate_l45     	 -110
+        #define v				  80
+        #define back_clamp_close  450
+        #define back_clamp_open  1800
+        #define back_clamp_up	 1800
+        #define back_clamp_down	  500
+         
+        //Sensors
+        #define bw_right		   	4
+        #define bw_left		       	5
+        #define bumper_l		    0
+        #define bumper_r			1
+        #define light				3
+        #define black			  	180
+        #define white		      	100
+        #define bumper_front		2
+        
+        //Camera
+        #define yellow_objects	    0
+        #define red_objects			1
+        
+        printf("Init complete\n");
+        msleep(500);
+        i--;
+    }
+
+	int drive(int forward, int v_drive)
+    {
+      	cmpc(motor_r); 
+      	cmpc(motor_l);
+     	while (gmpc(motor_l)<(forward))
+      		{
+     	 	motor(motor_r,-v_drive);
+         	motor(motor_l,v_drive);
+      		}
+      	msleep(500);
+      	return 0;
+    }
+
+	int drive_until_sensor_or_max(int max, int v_s)
+	{	
+ 		cmpc(motor_r); 
+     	cmpc(motor_l);
+     	while (gmpc(motor_l)<(max) && digital(bumper_front) == 0)
+      		{
+            	printf("Motor position: %d\n", gmpc(motor_l));
+     	 		motor(motor_r,-v_s);
+         		motor(motor_l,v_s);
+      		}
+      	return 0;
+    }
+
+	int drive_backwards(int backward, int v_drive)
+    {
+     	cmpc(motor_l);
+     	cmpc(motor_r);
+     
+    	while(gmpc(motor_l)>backward)
+    {
+     motor(motor_r,v_drive);
+     motor(motor_l,-v_drive);
+    }
+    msleep(500);
+    ao();
+    return 0;
+    }
+
+	
+	void open_clamp()
+    {
+    enable_servos();
+    while (get_servo_position(clamp)!=clamp_open)
+    {
+    set_servo_position(clamp, clamp_open);
+    printf("Servo position: %d\n", get_servo_position(clamp));
+    msleep(500);
+    }
+    disable_servos();
+    }
+    
+	void close_clamp()
+    {
+        enable_servos();
+    	while (get_servo_position(clamp)!=clamp_close)
+    	{
+  		
+    	set_servo_position(clamp, clamp_close);
+   	 	
+   		printf("Servo position: %d\n", get_servo_position(clamp));
+    	msleep(500);
+    	}
+        disable_servo(clamp);
+    }
+	void close_clamp_a_little_bit()
+    {	
+        int clamp_close_a_little_bit_value=clamp_close*(1.5/2);
+        enable_servos();
+    	while (get_servo_position(clamp)!=clamp_close_a_little_bit_value)
+    	{
+  		
+    	set_servo_position(clamp,clamp_close_a_little_bit_value);
+   	 	
+   		printf("Servo position: %d\n", get_servo_position(clamp));
+    	msleep(500);
+    	}
+        disable_servo(clamp);
+    }
+
+	int rotate_right(int right)
+	{
+     cmpc(motor_r); 
+     while (gmpc(motor_r)<right)
+      {
+     	 motor(motor_r,40);
+         motor(motor_l,40);
+         printf("Motor position: %d\n", gmpc(motor_r));
+     }
+     ao();
+     return 0;
+    }
+
+	int rotate_left(int left)
+	{
+     cmpc(motor_l); 
+     while (gmpc(motor_l)>left)
+      {
+     	 motor(motor_r,-40);
+         motor(motor_l,-40);
+         printf("Motor position: %d\n", gmpc(motor_l));
+     }
+     ao();
+     return 0;
+    }
+	
+	void calibrate()
+	{
+     a=0;
+     b=0;
+     c=0;
+     int x=0;
+     printf("Calibrate robot\n");
+     cmpc(motor_r); 
+     cmpc(motor_l);
+     printf("Motor position: %d\n", gmpc(motor_r));
+     while ((b==0 || c==0) && x<10)
+      {
+         if (a==0)
+         {    
+     	 motor(motor_r,70);
+         motor(motor_l,-70);
+         a++;
+         }
+         if (digital(bumper_l) == 1)
+         {
+        off(motor_l);
+         b++;
+         }
+         if (digital(bumper_r) == 1)
+         {
+         off(motor_r);
+         c++;
+         }
+       x++;
+       msleep(200);
+     }
+      msleep(500);
+      ao();     
+    }
+
+	void camera()
+    {
+     	int mid = 0;
+     	camera_open_black();
+        printf("Start camera\n");
+     	while (get_object_count(yellow_objects)<1)
+     		{
+         	rotate_left(-850);
+         	drive(100,v);
+         	rotate_right(850);
+         	camera_update();
+        	}
+   		 	printf("X- coordinate: %d\n", get_object_center_x(yellow_objects, 1));
+    
+   				 while (mid<1)
+    				{
+    					if (get_object_center_x(yellow_objects,1)<80)
+    						{
+    						rotate_left(-850);
+    						drive(100,v);
+    						rotate_right(850);
+    						camera_update();
+    						}
+    					else if (get_object_center_x(yellow_objects,1)>80)
+    							{
+    							rotate_right(850);
+    							drive(100,v);
+    							rotate_left(-850);
+    							camera_update();
+    							}
+									 else
+    									{
+    									 mid++;
+                                        }
+    				}
+    camera_close(); 
+    msleep(500);
+    }
+
+	void turn_around()
+    {
+     cmpc(motor_r); 
+     while (gmpc(motor_r)<turn)
+      {
+     	 motor(motor_r,v);
+         motor(motor_l,v);
+         printf("Motor position: %d\n", gmpc(motor_r));
+     }
+     msleep(500);
+     ao();
+     }
+
+	int rotate45_r(int right)
+    {
+     cmpc(motor_r); 
+     while (gmpc(motor_r)<right)
+      {
+     	 motor(motor_r,80-45);
+         motor(motor_l,80-45);
+         printf("Motor position: %d\n", gmpc(motor_r));
+     }
+     msleep(500);
+     ao();
+     return 0;
+    }
+	
+	int rotate45_l(int left)
+    {
+	cmpc(motor_l); 
+     while (gmpc(motor_l)>left)
+      {
+     	 motor(motor_r,-80+40);
+         motor(motor_l,-80+40);
+         printf("Motor position: %d\n", gmpc(motor_l));
+     }
+     msleep(500);
+     ao();
+     return 0;
+    }
+
+	void drive_correction()
+    {
+     printf("I am here");
+    int length=0;
+    cmpc(motor_l);
+   	gohere:  
+   	while (length<5000)
+    {
+	 	while(analog(bw_right)<black && analog(bw_left)<black)
+     		{
+      			length=length+gmpc(motor_l);
+      			drive(50,50);
+      			printf("Distance drove: %d\n", length);
+      			msleep(50);
+            	goto gohere;
+     		}
+   	 		if (analog(bw_right) > black && analog(bw_left) < black)
+    		{
+         		msleep(20);
+    				while(analog(bw_right)>black && analog(bw_left) < black)
+       				{
+              			motor(motor_l,20);  
+                		off(motor_r);
+       				}
+    		}
+     		if (analog(bw_right)<black && analog(bw_left)>black)
+     		{
+        		msleep(20);
+    			while(analog(bw_left) > black && analog(bw_right) < black)
+        		{
+          			motor(motor_r,-20);
+          			off(motor_l);
+         
+        		}
+     		}
+    	}
+     	
+     
+     ao();
+     msleep(500);
+    }
+
+    
+
+    void open_clamp_back()
+    {
+     enable_servo(back_clamp);
+    	while (get_servo_position(back_clamp)!=back_clamp_open)
+    	{
+    	set_servo_position(back_clamp, back_clamp_open);
+   		printf("Servo position: %d\n", get_servo_position(back_clamp));
+    	msleep(500);
+    	}
+        disable_servo(back_clamp);   
+    }
+
+	 void close_clamp_back()
+    {
+     enable_servo(back_clamp);
+    	while (get_servo_position(back_clamp)!=back_clamp_close)
+    	{
+    	set_servo_position(back_clamp, back_clamp_close);
+   		printf("Servo position: %d\n", get_servo_position(back_clamp));
+    	msleep(500);
+    	}
+        disable_servo(back_clamp);   
+    }
+	
+	 void rise_back_clamp()
+    {
+     enable_servo(move_back_clamp);
+    	while (get_servo_position(move_back_clamp)!=back_clamp_up)
+    	{
+    	set_servo_position(move_back_clamp, back_clamp_up);
+   		printf("Servo position: %d\n", get_servo_position(move_back_clamp));
+    	msleep(500);
+    	}
+        disable_servo(move_back_clamp);   
+    }
+
+	 void kip_down_back_clamp()
+    {
+     enable_servo(move_back_clamp);
+    	while (get_servo_position(move_back_clamp)!=back_clamp_down)
+    	{
+    	set_servo_position(move_back_clamp, back_clamp_down);
+   		printf("Servo position: %d\n", get_servo_position(move_back_clamp));
+    	msleep(500);
+    	}
+        disable_servo(move_back_clamp);   
+    }
+
+		void drive_till_black()
+    {
+   	 	while (analog(bw_right)<black && analog(bw_left)<black)
+    {
+    	drive(50,30);
+    }
+    }
+
+	void camera_medical_building()
+    {
+    	int detect=0;
+    	int loops=0;
+    	camera_open_black();
+    	while(loops<=70 && detect<5)
+    	{
+            msleep(50);
+
+            
+    		if (get_object_count(0)>=1)
+    		{
+     			detect++;
+     			printf("Detectet\n");
+    		}
+            
+   		 	loops++;
+            
+    		printf("Loops++\n");
+            printf("Position: %d\n", get_object_center_x(0,0));
+            camera_update();
+ 
+     	}
+	camera_close();
+    ao();
+    msleep(500);
+    }
+
+	void get_two_fireman()
+    {
+    calibrate_fireman();
+    drive_backwards(-1,10);
+    close_clamp();
+    msleep(100);
+    drive_backwards(-150,100);
+    open_clamp();
+    drive(20,20);
+    calibrate_fireman();
+	drive_backwards(-1,10);
+    close_clamp();
+    msleep(100);
+    drive_backwards(-150,100);
+    open_clamp();
+    drive(20,20);    
+    close_clamp();
+        
+    }
+
+	void calibrate_fireman()
+    {
+    	while(digital(bumper_front)==0)
+    	{
+      		drive(75,25);   
+    	}
+    }
+    
+	void firetruck()
+	{
+    	rotate_right(500);
+    	drive(120,40);
+    	close_clamp();
+    	drive_backwards(-1500,100);
+    		if (burning==1)
+    		{
+    		rotate_right(250);
+        	drive(200,100);
+        	drive_backwards(-200,100);
+        	rotate_left(-900);
+        	drive_backwards(1000,100);		//calibrate on other side
+        	calibrate();
+    		}
+        
+    		else
+            {
+    		rotate_right(580);
+            drive(1900,90);
+            msleep(100);
+            open_clamp();
+            msleep(100);
+            drive(500,50);
+            drive_backwards(-130,90);
+            close_clamp();
+            drive_backwards(-50,50);
+            msleep(100);
+            rotate_right(380);
+            drive_backwards(-3000,80);		//calibrate on other side
+            calibrate();
+    		}
+    }
+
+	void get_robot_parallel()
+    {
+       printf("Get robot parallel\n");
+       while (analog(bw_left)>black || analog(bw_right)>black)
+     	{
+      		while (analog(bw_left)>black)
+      		{
+         		rotate_left(-3);   
+        	}
+         
+        	while (analog(bw_right)>black)
+        	{
+         		rotate_right(3);   
+        	}
+     	} 
+    }
+
+	void medical_building_drive()
+    {
+    if (burning == 1)
+    	{
+      	printf ("Burning: %d\n", burning);
+        rotate_right(500);
+      	drive_backwards(-50,100);
+      	rotate_left(-1200);
+    	}
+     
+    if (burning == 0)
+    	{
+        printf ("Burning: %d\n", burning);
+        drive(700,60);
+        close_clamp_a_little_bit();
+        open_clamp();
+        drive_until_sensor_or_max(600, 50);
+        drive_backwards(-900,100);
+    	rotate_left(-750);
+    	}    
+    }
+
+	void Step1()
+    {
+    printf("Step 1 started\n");
+    msleep(2000);
+    rise_back_clamp();
+    open_clamp_back();
+    drive_backwards(-150,80);
+    open_clamp();
+    rotate_right(20);
+    drive(2300,100);
+   	drive_till_black();
+    drive(700,30);
+    close_clamp();
+    rotate_left(-900);
+    open_clamp();
+    drive(100,50);
+    drive_correction();
+    rotate_left(-3);
+    //get_robot_parallel();
+  	camera_medical_building();
+    medical_building_drive();
+    printf("Step 1 finished\n");    
+    }
+
+	void Step2()
+    {
+    printf("Step 2 started\n");
+    open_clamp();
+    printf("Burning: %d\n", burning);
+    if (burning == 1)
+    {
+    drive_backwards(-400,100);
+    calibrate();
+    drive(4000,100);
+    }
+    else 
+    {
+     drive (1600,90);   
+    }
+    firetruck();
+   	open_clamp();
+	drive(1500,50);
+    rotate_left(-790);			
+    get_two_fireman();			//until here: get two fireman
+    
+    
+    if(burning == 1)
+    {
+     drive_backwards(-250,100);
+     rotate_right(700);
+     drive(4500,80);
+    }
+    else
+    {
+     	drive_backwards(-400,100);
+     	rotate_right(500);
+     	drive(3000,90);
+     	open_clamp();
+     	drive(200,30);					//the first two fireman are delivered
+     
+     	drive_backwards(-130,90);
+     	close_clamp();
+     	drive_backwards(-50,50);
+     	msleep(100);
+     	rotate_right(300);
+     	drive_backwards(-3000,80);		//calibrate on other side
+     	calibrate();
+     	open_clamp();
+		drive(1700,50);
+    	rotate_left(-780);
+        get_two_fireman();
+        
+        drive_backwards(-400,100);
+     	rotate_right(500);
+     	drive(3000,90);
+     	open_clamp();
+     	drive(200,30);					//the second two fireman are delivered
+     
+     	drive_backwards(-130,90);
+     	close_clamp();
+     	drive_backwards(-50,50);
+     	msleep(100);
+     	rotate_right(300);
+     	drive_backwards(-3000,80);		//calibrate on other side
+     	calibrate();
+     	open_clamp();
+		drive(1700,50);
+    	rotate_left(-780);
+        get_two_fireman();
+        drive_backwards(-400,100);
+     	rotate_right(500);
+     	drive(3000,90);
+     	open_clamp();
+     	drive(200,30);					//the last fireman is delivered
+    }
+    }
+    
+    
